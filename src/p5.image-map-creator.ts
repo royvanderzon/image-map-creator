@@ -44,6 +44,7 @@ export class imageMapCreator {
   protected tool: Tool;
   protected drawingTools: Tool[];
   protected settings: any;
+
   protected menu: menuType = {
     // SetUrl: {
     //   onSelect: (target: Element, key: any, item: HTMLElement, area: Area) => {
@@ -92,6 +93,7 @@ export class imageMapCreator {
 
   //   custom listen functions
   protected onSave?: Function;
+  protected onLoad?: Function;
 
   protected enableTools: Tool[];
   protected enableDefaultArea: boolean;
@@ -103,6 +105,8 @@ export class imageMapCreator {
   protected enableOutput: boolean;
   protected enableSave: boolean;
   protected sidebarName: string;
+
+  protected altPressedKey: boolean;
 
   /**
    * Constructor
@@ -117,6 +121,7 @@ export class imageMapCreator {
       width: number; //
       height: number;
       onSave?: Function;
+      onLoad?: Function;
       menuItems?: any;
       enableTools?: Tool[];
       enableDefaultArea?: boolean;
@@ -179,8 +184,12 @@ export class imageMapCreator {
 
     // custom events
     this.onSave = options.onSave || undefined;
+    this.onLoad = options.onLoad || undefined;
 
     this.loadData = this.loadData.bind(this);
+    this.loadFile = this.loadFile.bind(this);
+
+    this.altPressedKey = false;
 
     // custom context menu items
     if (typeof options.menuItems !== "undefined") {
@@ -211,6 +220,7 @@ export class imageMapCreator {
     p5.mouseWheel = this.mouseWheel.bind(this);
     //@ts-ignore p5 types didn't specify the KeyBoardEvent nor the boolean return type
     p5.keyPressed = this.keyPressed.bind(this);
+    p5.keyReleased = this.keyReleased.bind(this);
   }
 
   //---------------------------- p5 Functions ----------------------------------
@@ -226,7 +236,7 @@ export class imageMapCreator {
         this.map.setName(v);
       });
 
-    if (this.enableTools.length > 0)
+    if (this.enableTools && this.enableTools.length > 0)
       this.settings.addDropDown("Tool", this.enableTools, (v: ToolLabel) => {
         this.setTool(v.value);
       });
@@ -268,6 +278,10 @@ export class imageMapCreator {
     if (this.enableOutput) {
       //@ts-ignore Select all onclick on the Output field
       document.getElementById("Output").setAttribute("onFocus", "this.select();");
+    }
+
+    if (typeof this.onLoad !== "undefined") {
+      this.onLoad();
     }
   }
 
@@ -324,6 +338,12 @@ export class imageMapCreator {
   }
 
   private mouseDragged(): void {
+    if (this.altPressedKey) {
+      this.view.transX += this.p5.mouseX - this.p5.pmouseX;
+      this.view.transY += this.p5.mouseY - this.p5.pmouseY;
+      return;
+    }
+
     if (this.mouseIsHoverSketch() && !ContextMenu.isOpen()) {
       if (this.p5.mouseButton == this.p5.LEFT) {
         switch (this.tool) {
@@ -371,6 +391,11 @@ export class imageMapCreator {
   }
 
   private keyPressed(e: KeyboardEvent): boolean {
+    //@ts-ignore p5 types didn't specify the ESCAPE keycode
+    if (e.altKey) {
+      this.altPressedKey = true;
+    }
+
     if (e.composed && e.ctrlKey) {
       switch (e.key) {
         case "s":
@@ -394,6 +419,13 @@ export class imageMapCreator {
       this.tempArea = new AreaEmpty();
       return false;
     }
+    return true;
+  }
+
+  private keyReleased(e: KeyboardEvent): boolean {
+    //@ts-ignore p5 types didn't specify the ESCAPE keycode
+    this.altPressedKey = false;
+
     return true;
   }
 
@@ -523,6 +555,10 @@ export class imageMapCreator {
         });
     }
     this.bgLayer.disappear();
+  }
+
+  public loadFile(url: string): void {
+    this.img.data = this.p5.loadImage(url, (img) => this.resetView(img));
   }
 
   public loadData(data: Object) {

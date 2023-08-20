@@ -13,22 +13,22 @@ export abstract class Area {
    * @param {number} id the unique id
    * @param {Object} data data
    */
-  constructor(protected shape: Shape, protected coords: Coord[] = [], protected href: string = "", protected title: string = "", public id: number = 0, protected data: Object = {}) {}
+  constructor(protected shape: Shape, protected coords: Coord[] = [], protected href: string = "", protected title: string = "", public data: Object = {}, public id: number = 0) {}
 
   static fromObject(o: Object): Area {
     switch ((<Area>o).shape) {
       case "rect":
         const r = o as AreaRect;
-        return new AreaRect(r.coords.map(Coord.fromObject), r.href, r.title, r.id);
+        return new AreaRect(r.coords.map(Coord.fromObject), r.href, r.title, r.data, r.id);
       case "circle":
         const c = o as AreaCircle;
-        return new AreaCircle(c.coords.map(Coord.fromObject), c.radius, c.href, c.title, c.id);
+        return new AreaCircle(c.coords.map(Coord.fromObject), c.radius, c.href, c.title, c.data, c.id);
       case "poly":
         const p = o as AreaPoly;
-        return new AreaPoly(p.coords.map(Coord.fromObject), p.href, p.title, p.id, p.closed);
+        return new AreaPoly(p.coords.map(Coord.fromObject), p.href, p.title, p.data, p.id, p.closed);
       case "default":
         const d = o as AreaDefault;
-        return new AreaDefault(d.iMap, d.href, d.title);
+        return new AreaDefault(d.iMap, d.href, d.title, d.data);
       default:
         throw "Not an area";
     }
@@ -193,7 +193,7 @@ export abstract class Area {
   }
 
   toSvg(scale = 1): string {
-    return `<a xlink:href="${this.href}">${this.svgArea(scale)}</a>`;
+    return `<a id="map_object_${this.id}" data-id="${this.id}" xlink:href="${this.href}">${this.svgArea(scale)}</a>`;
   }
 
   abstract isDrawable(): boolean;
@@ -228,8 +228,8 @@ export class AreaCircle extends Area {
    * @param {string} href the link this area is going to point to
    * @param {number} id the unique id
    */
-  constructor(coords: Coord[] = [], public radius: number = 0, href: string = "", title: string = "", id: number = 0) {
-    super("circle", coords, href, title, id);
+  constructor(coords: Coord[] = [], public radius: number = 0, href: string = "", title: string = "", data: Object = {}, id: number = 0) {
+    super("circle", coords, href, title, data, id);
   }
 
   getCenter(): Coord {
@@ -280,8 +280,8 @@ export class AreaPoly extends Area {
    * @param {string} href the link this area is going to point to
    * @param {int} id the unique id
    */
-  constructor(coords: Coord[] = [], href: string = "", title: string = "", id: number = 0, public closed = false) {
-    super("poly", coords, href, title, id);
+  constructor(coords: Coord[] = [], href: string = "", title: string = "", data: Object = {}, id: number = 0, public closed = false) {
+    super("poly", coords, href, title, data, id);
   }
 
   isDrawable(): boolean {
@@ -368,8 +368,8 @@ export class AreaRect extends AreaPoly {
    * @param {string} href the link this area is going to point to
    * @param {number} id the unique id
    */
-  constructor(coords: Coord[] = [], href: string = "", title: string = "", id: number = 0) {
-    super(coords, href, title, id, true);
+  constructor(coords: Coord[] = [], href: string = "", title: string = "", data: Object = {}, id: number = 0) {
+    super(coords, href, title, data, id, true);
     if (this.coords.length > 0 && this.coords.length < 4) {
       let coord = this.firstCoord();
       this.coords = [coord, coord.clone(), coord.clone(), coord.clone()];
@@ -399,8 +399,8 @@ export class AreaDefault extends Area {
    * @param {string} href the link this area is going to point to
    * @param {string} title the title on hover
    */
-  constructor(public iMap: ImageMap, href: string = "", title: string = "") {
-    super("default", [], href, title);
+  constructor(public iMap: ImageMap, href: string = "", title: string = "", data: Object = {}) {
+    super("default", [], href, title, data);
   }
 
   isDrawable(): boolean {

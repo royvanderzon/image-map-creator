@@ -29,6 +29,9 @@
         onSave: function (map) {
           console.log(map);
         },
+        onLoad: function () {
+          imcreator.loadFile("./test.jpg");
+        },
         enableTools: ["rectangle", "polygon", "circle", "select", "delete", "test"],
         enableSave: true,
         enableHistory: true,
@@ -72,6 +75,7 @@
           SetData: (_this) => ({
             onSelect: async (target, key, item, area, a, b, c) => {
               let areaData = area.getData();
+
 
               if (typeof areaData.counter !== "number") {
                 areaData.counter = 0;
@@ -143,7 +147,9 @@
               href: "",
               title: "",
               id: 1,
-              data: {},
+              data: {
+                counter: 340,
+              },
               closed: true,
             },
           ],
@@ -155,9 +161,10 @@
       };
 
       console.log(imcreator);
-      //   setTimeout(() => {
       imcreator.loadData(mapData);
-      //   }, 500);
+      setTimeout(() => {
+        imcreator.loadFile("./test.jpg");
+      }, 500);
     </script>
   </body>
 </html>
